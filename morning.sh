@@ -124,5 +124,41 @@ else
   echo "  No database found — run Mining Guardian first."
 fi
 
+# --- Post morning summary to Slack ---
+# Load Slack webhook from environment or .env file
+SLACK_WEBHOOK="${SLACK_WEBHOOK_URL:-}"
+if [ -z "$SLACK_WEBHOOK" ] && [ -f "/Users/BigBobby/Documents/GitHub/Mining Gaurdian/.env" ]; then
+  SLACK_WEBHOOK=$(grep '^SLACK_WEBHOOK_URL=' "/Users/BigBobby/Documents/GitHub/Mining Gaurdian/.env" | cut -d'=' -f2-)
+fi
+MORNING_SUMMARY=$(python3 - <<'PYEOF'
+import sqlite3
+db = "/Users/BigBobby/Documents/GitHub/Mining Gaurdian/guardian.db"
+try:
+    conn = sqlite3.connect(db)
+    row = conn.execute("SELECT scanned_at, total_miners, online, offline, issues FROM scans ORDER BY id DESC LIMIT 1").fetchone()
+    if row:
+        t, total, online, offline, issues = row
+        t = t[:16].replace("T", " ")
+        if issues == 0:
+            print(f"☀️ *Morning Briefing — Fleet Status*\nLast scan: {t}\n✅ All {total} miners healthy ({online} online)")
+        else:
+            rows = conn.execute("SELECT action, COUNT(*) FROM miner_readings WHERE scan_id=(SELECT MAX(id) FROM scans) AND action IS NOT NULL GROUP BY action").fetchall()
+            amap = dict(rows)
+            parts = []
+            if amap.get("PDU_CYCLE"): parts.append(f"{amap['PDU_CYCLE']} PDU cycle")
+            if amap.get("RESTART"): parts.append(f"{amap['RESTART']} firmware restart")
+            if amap.get("TEMP_ACTION_REQUIRED"): parts.append(f"{amap['TEMP_ACTION_REQUIRED']} high temp")
+            if amap.get("MONITOR"): parts.append(f"{amap['MONITOR']} monitor")
+            print(f"☀️ *Morning Briefing — Fleet Status*\nLast scan: {t}\n⚠️ {total} miners | {online} online | {offline} offline | {issues} issues: {', '.join(parts)}")
+    conn.close()
+except Exception as e:
+    print(f"☀️ *Morning Briefing* — Could not read fleet data: {e}")
+PYEOF
+)
+
+curl -s -X POST -H 'Content-type: application/json' \
+  --data "{\"text\": \"$MORNING_SUMMARY\"}" \
+  "$SLACK_WEBHOOK" > /dev/null
+
 echo ""
 echo "========================================"
