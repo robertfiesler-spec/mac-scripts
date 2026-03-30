@@ -5,6 +5,9 @@
 # BiXBiT USA
 # ============================================
 
+# Keep Mac awake for duration of this script
+caffeinate -i -w $$ &
+
 # --- Header ---
 echo "========================================"
 echo "  GOOD MORNING, ROB"
