@@ -185,7 +185,6 @@ try:
     print(f"  CW Pump 2     :  {f(cwp2, 0)}%")
     print(f"  CT Fan 1      :  {f(ct1, 0)}%")
     print(f"  CT Fan 2      :  {f(ct2, 0)}%")
-    print(f"  Basin Level   :  {basin_str}")
     print(f"  Leak Alarm    :  {leak_str}")
 except Exception as e:
     print(f"  Could not reach Eclypse BAS: {e}")
@@ -250,7 +249,6 @@ try:
     try: delta = f"{float(ret)-float(sup):.1f}" if sup and ret else "N/A"
     except: delta = "N/A"
     alarms = []
-    if str(basin).lower() != "active": alarms.append("🔴 Basin Low")
     if str(leak).lower() == "active":  alarms.append("🔴 Leak!")
     alarm_str = "  ".join(alarms) if alarms else "✅ Clear"
     hvac_line = f"Supply {fv(sup)}°F | Return {fv(ret)}°F | ΔT {delta}°F | DP {fv(dp)} PSI | Pump2 {fv(cwp2,0)}% | Fan1 {fv(ct1,0)}% | Alarms: {alarm_str}"
