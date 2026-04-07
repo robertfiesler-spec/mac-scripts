@@ -267,4 +267,8 @@ curl -s -X POST -H 'Content-type: application/json' \
   "$SLACK_WEBHOOK" > /dev/null
 
 echo ""
+
+# --- Quote of the Day + ASCII Art ---
+/Users/BigBobby/Documents/GitHub/mac-scripts/quote.sh
+
 echo "========================================"
